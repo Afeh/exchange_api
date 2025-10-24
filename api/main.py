@@ -13,6 +13,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
 @app.post("/countries/refresh")
 def refresh_data(db: Session = Depends(get_db)):
     try:
@@ -26,6 +27,11 @@ def refresh_data(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail={"error": "Internal server error", "details": str(e)})
 
+@app.get("/countries/image")
+def get_summary_image():
+    if not os.path.exists(IMAGE_PATH):
+        raise HTTPException(status_code=404, detail={"error": "Summary image not found"})
+    return FileResponse(IMAGE_PATH, media_type="image/png")
 
 @app.get("/countries", response_model=List[schemas.CountryResponse])
 def get_countries(
@@ -73,8 +79,3 @@ def get_status(db: Session = Depends(get_db)):
         "last_refreshed_at": status.last_refreshed_at if status else None
     }
 
-@app.get("/countries/image")
-def get_summary_image():
-    if not os.path.exists(IMAGE_PATH):
-        raise HTTPException(status_code=404, detail={"error": "Summary image not found"})
-    return FileResponse(IMAGE_PATH, media_type="image/png")
